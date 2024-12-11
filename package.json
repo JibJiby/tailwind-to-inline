@@ -2,19 +2,19 @@
   "name": "@jibjiby/tailwind-to-inline",
   "version": "1.0.5",
   "description": "Convert HTML templates with Tailwind CSS classes to inline styles.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     "import": {
-      "types": "dist/index.d.mts",
-      "import": "dist/index.mjs"
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
     },
     "require": {
-      "types": "dist/index.d.ts",
-      "require": "dist/index.js"
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
     }
   },
   "scripts": {

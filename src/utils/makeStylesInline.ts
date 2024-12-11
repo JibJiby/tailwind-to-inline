@@ -12,6 +12,7 @@ import { rgbToHex } from './rgbToHex';
 type TMakeStylesInline = (
   templatePath: string,
   placeholderValues?: { [key: string]: string },
+  excludedPrefixes?: string[],
 ) => Promise<string>;
 
 const processTailwindCSS = async (html: string): Promise<string> => {
@@ -66,19 +67,23 @@ const simplifyColors = (css: string): string => {
 //   return css.replaceAll(regex, '');
 // };
 
-const removeOnlyTWClasses = (html: string) => {
-  const classesRegex = /\s*class=(['"])(.*?)\1/g; // class="" 색출
+export const removeOnlyTWClasses = (
+  html: string,
+  excludedPrefixes: string[] = [],
+) => {
+  // const classesRegex = /\s*class=(['"])(.*?)\1/g; // class="" 색출 (공백 미포함)
+  const classesRegex = /\s*class=(['"])([\s\S]*?)\1/g; // 공백 포함
 
-  // html.replace(classesRegex, (match, quote, classContent) => {
   const updatedHtml = html.replace(
     classesRegex,
     (match, quote, classContent) => {
-      const paddingRegex = /^(p[ltbr]?)-/;
-      const marginRegex = /^(m[ltbr]?)-/;
+      const layoutRegex = /^(inline-)?(flex|grid)/;
+      const paddingRegex = /^(p[ltbrxy]?)-\d+/;
+      const marginRegex = /^(m[ltbrxy]?)-\d+/;
       const displayRegex = /^(relative|absolute|sticky|fixed)$/;
       const widthRegex = /^(min-|max-)?w-/;
       const heightRegex = /^(min-|max-)?h-/;
-      const directionRegex = /^(top|left|right|bottom)-/;
+      const directionRegex = /^(top|left|right|bottom)-\d/;
 
       const twPrefixes = [
         'text-',
@@ -96,23 +101,27 @@ const removeOnlyTWClasses = (html: string) => {
         'rounded-',
         'z-',
         'border',
+        'aspect-',
       ];
+      twPrefixes.push(...excludedPrefixes);
 
-      // 제거
+      // tailwind class 만 제거
       const filteredClasses = classContent
+        .replace(/[\r\n]+/g, ' ') // 개행 제거
         .split(/\s+/) // Split by whitespace
         .filter(
-          (cls: string) => !twPrefixes.some((prefix) => cls.startsWith(prefix)),
+          (cls: string) =>
+            !twPrefixes.some((prefix) => cls.trim().startsWith(prefix)),
         )
+        .filter((cls: string) => !layoutRegex.test(cls))
         .filter((cls: string) => !paddingRegex.test(cls))
         .filter((cls: string) => !marginRegex.test(cls))
         .filter((cls: string) => !displayRegex.test(cls))
         .filter((cls: string) => !widthRegex.test(cls))
         .filter((cls: string) => !heightRegex.test(cls))
         .filter((cls: string) => !directionRegex.test(cls))
-        .join(' '); // Rejoin the filtered classes with spaces
+        .join(' ');
 
-      // Reconstruct the class attribute
       return ` class=${quote}${filteredClasses}${quote}`;
     },
   );
@@ -138,6 +147,7 @@ const inlineStyles = async (html: string): Promise<string> => {
 export const makeStylesInline: TMakeStylesInline = async (
   templatePath,
   data,
+  excludedPrefixes = [],
 ) => {
   const templateSource = fs.readFileSync(templatePath, 'utf8');
   const template = Handlebars.compile(templateSource);
@@ -147,5 +157,5 @@ export const makeStylesInline: TMakeStylesInline = async (
 
   // return htmlWithInlinedStyles;
   // return removeCssClasses(htmlWithInlinedStyles);
-  return removeOnlyTWClasses(htmlWithInlinedStyles);
+  return removeOnlyTWClasses(htmlWithInlinedStyles, excludedPrefixes);
 };

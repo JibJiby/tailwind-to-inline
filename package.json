@@ -8,10 +8,13 @@
     "dist"
   ],
   "exports": {
-    ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.ts"
+    "import": {
+      "types": "dist/index.d.mts",
+      "import": "dist/index.mjs"
+    },
+    "require": {
+      "types": "dist/index.d.ts",
+      "require": "dist/index.js"
     }
   },
   "scripts": {

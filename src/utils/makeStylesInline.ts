@@ -4,6 +4,8 @@ import Handlebars from 'handlebars';
 import postcss from 'postcss';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
+// @ts-ignore
+import postcssRemToPixel from 'postcss-rem-to-pixel';
 
 import { rgbToHex } from './rgbToHex';
 
@@ -21,8 +23,13 @@ const processTailwindCSS = async (html: string): Promise<string> => {
   };
 
   const result = await postcss([
+    // plugin
     tailwindcss(tailwindConfig),
     autoprefixer,
+    postcssRemToPixel({
+      rootValue: 16, // 1rem = 16px,
+      propList: ['*'],
+    }),
   ]).process('@tailwind components; @tailwind utilities;', {
     from: undefined,
   });
@@ -52,11 +59,65 @@ const simplifyColors = (css: string): string => {
   return hexColorsInsteadOfRgb;
 };
 
-const removeCssClasses = (css: string) => {
-  // https://claude.ai/chat/9475aaf1-207a-4921-8b7d-f7a2b14c265f
-  const regex = /\s*class=(['"])(?:(?!\1)[^\\]|\\.)*\1/g;
+// const removeCssClasses = (css: string) => {
+//   // https://claude.ai/chat/9475aaf1-207a-4921-8b7d-f7a2b14c265f
+//   const regex = /\s*class=(['"])(?:(?!\1)[^\\]|\\.)*\1/g;
 
-  return css.replaceAll(regex, '');
+//   return css.replaceAll(regex, '');
+// };
+
+const removeOnlyTWClasses = (html: string) => {
+  const classesRegex = /\s*class=(['"])(.*?)\1/g; // class="" 색출
+
+  // html.replace(classesRegex, (match, quote, classContent) => {
+  const updatedHtml = html.replace(
+    classesRegex,
+    (match, quote, classContent) => {
+      const paddingRegex = /^(p[ltbr]?)-/;
+      const marginRegex = /^(m[ltbr]?)-/;
+      const displayRegex = /^(relative|absolute|sticky|fixed)$/;
+      const widthRegex = /^(min-|max-)?w-/;
+      const heightRegex = /^(min-|max-)?h-/;
+      const directionRegex = /^(top|left|right|bottom)-/;
+
+      const twPrefixes = [
+        'text-',
+        'bg-',
+        'flex',
+        'grid',
+        'items-',
+        'justify-',
+        'content-',
+        'self-',
+        'place-',
+        'gap-',
+        'row-',
+        'col-',
+        'rounded-',
+        'z-',
+        'border',
+      ];
+
+      // 제거
+      const filteredClasses = classContent
+        .split(/\s+/) // Split by whitespace
+        .filter(
+          (cls: string) => !twPrefixes.some((prefix) => cls.startsWith(prefix)),
+        )
+        .filter((cls: string) => !paddingRegex.test(cls))
+        .filter((cls: string) => !marginRegex.test(cls))
+        .filter((cls: string) => !displayRegex.test(cls))
+        .filter((cls: string) => !widthRegex.test(cls))
+        .filter((cls: string) => !heightRegex.test(cls))
+        .filter((cls: string) => !directionRegex.test(cls))
+        .join(' '); // Rejoin the filtered classes with spaces
+
+      // Reconstruct the class attribute
+      return ` class=${quote}${filteredClasses}${quote}`;
+    },
+  );
+
+  return updatedHtml;
 };
 
 const inlineStyles = async (html: string): Promise<string> => {
@@ -82,7 +143,9 @@ export const makeStylesInline: TMakeStylesInline = async (
   const template = Handlebars.compile(templateSource);
   const html = template(data);
 
-  const inlinedStyles = await inlineStyles(html);
+  const htmlWithInlinedStyles = await inlineStyles(html);
 
-  return removeCssClasses(inlinedStyles);
+  // return htmlWithInlinedStyles;
+  // return removeCssClasses(htmlWithInlinedStyles);
+  return removeOnlyTWClasses(htmlWithInlinedStyles);
 };

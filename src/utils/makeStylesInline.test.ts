@@ -18,12 +18,12 @@ describe('renderEmailFromTemplate', () => {
     <title>Test title</title>
   </head>
   <body>
-    <div style="position: relative; z-index: 20; max-width: 512px; padding-left: 1rem; padding-top: 2.5rem;">
-      <span style="margin-right: 1.25rem; color: #fde047;">Welcome, John Doe</span>
+    <div class="my-class" style="position: relative; z-index: 20; max-width: 512px; padding-left: 16px; padding-top: 40px;">
+      <span class="" style="margin-right: 20px; color: #fde047;">Welcome, John Doe</span>
     </div>
     <div>
-      <a href="https://example.com" style="background-color: #3b82f6;">See all features</a>
-      <div style="background-image: url('https://example.com/custom-image.png'); background-repeat: no-repeat;"></div>
+      <a href="https://example.com" class="" style="background-color: #3b82f6;">See all features</a>
+      <div class="" style="background-image: url('https://example.com/custom-image.png'); background-repeat: no-repeat;"></div>
     </div>
   </body>
 </html>

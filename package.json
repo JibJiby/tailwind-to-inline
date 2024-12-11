@@ -1,6 +1,6 @@
 {
   "name": "@jibjiby/tailwind-to-inline",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Convert HTML templates with Tailwind CSS classes to inline styles.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
